@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    *{
+        box-sizing: border-box;
+    }
+    body {
+      font-family: 'Courier New', monospace;
+      background-color: #2a2a2a;
+      color: #ffffff;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+    
+    #container {
+      width: 100vw;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-around;
+      padding: 0px;
+    }
+    #container input{
+      border-radius: 15px;
+      padding: 10px;
+      font-family:"Poppins", sans-serif;
+      font-size: 1.2rem;
+      color: white;
+      background: rgba(30,30,30,255);
+      width: 60vw;
+      height: 40px;
+    }
+    #container button{
+      border-radius: 15px;
+      padding: 5px;
+      font-size: 1.1rem;
+      color:white;
+      background: rgba(30,30,30,255);
+    }
+    #terminal {
+      padding: 10px;
+      border-radius: 5px;
+      width: 100vw;
+      height: 85dvh;
+      margin-bottom: 10px;
+    }
+
+    #output {
+      overflow-x: hidden;
+      white-space: pre-wrap;
+      margin: 0;
+      color: #00cc66;
+    }
+
+    #input {
+      background: none;
+      border: none;
+      outline: none;
+      color: #ffffff;
+      width: 100%;
+    }
+    
+    #serveriput {
+      
+    }
+    
+    #connect{
+        height: 40px;
+    }
+    .prompt {
+      color: #00cc66;
+    }
+  </style>
+  <title>Micropython Webrepl</title>
+</head>
+<body>
+  <div id="container">
+    <input type="text" id="serverInput" autocomplete="off" value="192.168.89.213:8266">
+    <button id="connect">Connect</button>
+  </div>
+    
+  <div id="terminal">
+    <pre class="prompt"></pre>
+    <pre id="output"></pre>
+    <input type="text" id="input" autocomplete="off">
+  </div>
+    
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      let socket;
+      const terminal = document.getElementById("terminal");
+      const serverInput = document.getElementById("serverInput");
+      const connectBtn = document.getElementById("connect");
+      const output = document.getElementById("output");
+      const input = document.getElementById("input");
+    
+      // Display a welcome message when the document is loaded
+      welcomeMessage();
+
+      // Add a click event listener to the terminal
+      terminal.addEventListener("click", function () {
+        // Focus the input when the terminal is clicked
+        input.focus();
+      });
+
+      input.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          executeCommand(input.value);
+        }
+      });
+    
+    connectBtn.addEventListener("click",function(e){
+        // WebSocket connection
+        if(connectBtn.innerText == "Connect"){
+        socket = new WebSocket("ws://"+serverInput.value);
+        socket.onopen = function (event) {
+          connectBtn.textContent = "Disconnect";
+          serverInput.disabled = true;
+          console.log('WebSocket connection opened:');
+        };
+        
+        socket.addEventListener('message', (event) => {
+            displayOutput(event.data);
+        });
+
+        socket.addEventListener('close', (event) => {
+            connectBtn.textContent = "Connect";
+            displayOutput('WebSocket connection closed.');
+        });
+        }
+        else {
+            serverInput.disabled = false;
+            socket.close();
+        }
+    });
+     
+
+      function welcomeMessage() {
+        const welcomeText = "Welcome to Micropython!\n";
+        output.innerHTML += welcomeText;
+      }
+      
+      function executeCommand(command) {
+        // Add your command execution logic here
+        socket.send(command+"\r")
+        input.value = "";
+       // return "Command executed: " + command;
+      }
+
+      function displayOutput(message) {
+        output.innerHTML += message;
+        terminal.scrollTop = terminal.scrollHeight;
+      }
+    });
+  </script>
+</body>
+</html>
